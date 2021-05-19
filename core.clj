@@ -1,38 +1,42 @@
-(ns task1.core
+(ns task2.core
   (:gen-class)
-  (:require [task1.task1_2 :as r])
-  (:require [task1.task1_3 :as m])
-  (:require [task1.task1_4 :as mr]))
+  (:require [clojure.core.reducers :as r]))
 
-(defn decart_product [str1 alphabet]
-  (if (> (count alphabet) 0)
-    (if (not (.endsWith str1 (first alphabet)))
-      (cons (.concat str1 (first alphabet))
-        (decart_product str1 (rest alphabet)))
-      (decart_product str1 (rest alphabet)))
-    (list)))
+(defn sqr [x]
+  (* x x))
 
-(defn decart_product_total [coll alphabet]
-  (if (> (count coll) 0) 
-    (concat (decart_product (first coll) alphabet) 
-      (decart_product_total (rest coll) alphabet))
-    (list))) 
+(defn cross-out [coll]
+  (filter (fn [x] (or (< x (sqr (first coll)))
+                      (not= (mod x (first coll)) 0)))
+    coll))
 
-(defn get_substrings [alphabet n init]
+(defn sieve [coll]
+  (let [max-it 1000]
+    (reduce (fn [x y] (if (<= (sqr (nth x y)) (last x))
+                        (concat (take y x) (cross-out (drop y x)))
+                        (reduced x)))
+      coll
+      (range max-it))))
+    
+(defn get-nth-prime [n]
   (if (> n 0)
-    (get_substrings alphabet (dec n) (decart_product_total init alphabet))
-    init))
+    (let [max-size (* (* 1.2 n) (+ (Math/log n) 2)),
+          prime-numbers (sieve (range 2 max-size))]
+     (nth prime-numbers (dec n)))
+    nil))
 
-(defn -main [] 
+(declare primes)
 
-  ;(println (decart_product "string" (list "a" "b" "c" "g" "k")))
-  ;(println (decart_product_total (decart_product "string" (list "a" "b" "c" "g" "k"))
-  ;           (list "1" "2" "3" "4")]
+(def primes
+  (filter (fn [x] (not-any? #(zero? (mod x %))
+                    (filter #(<= % (Math/sqrt x)) 
+                      primes)))
+    (iterate inc 2)))
+
+(defn -main []
+  (load-file "src/task2/test.clj") 
+  (println "\n" (take 100 primes))
+  (time (println "\n" (nth primes 10000)))
+  (time (println "\n" (nth primes 10001))))
+
   
-
-  (println (m/my-map #(+ % 10) (range 10)))
-  (println (m/my-filter #(zero? (mod % 3)) (range 30)))
-  
-  (println (get_substrings (list "a" "b" "c" "d") 3 (list "")))
-  (println (r/get_substrings (list "a" "b" "c" "d") 3 (list "")))
-  (println (mr/get_substrings (list "a" "b" "c" "d") 3)))
